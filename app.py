@@ -40,8 +40,8 @@ with col1:
 with col2:
     symbol2 = st.text_input("Enter Second Symbol", "DX-Y.NYB").upper()
 start_date = '2008-01-11'
-end_date = '2025-06-06'
-#end_date = dt.datetime.today()
+#end_date = '2025-06-06'
+end_date = dt.datetime.today()
 # Function to fetch data
 @st.cache_data(ttl=3600)
 def get_data(symbol):
@@ -115,11 +115,11 @@ if st.button("Fetch Data & Run Strategy"):
             df["vol_signal"]
         ]
         df["ensemble_signal"] = (sum(all_signals) >= ensemble_param).astype(int)
-
+        #df["Signal"] = 
         # Calculate simple returns & cumulative returns
         df["strategy_returns"] = df[f"{symbol1}_returns"] * df["ensemble_signal"].shift(1)
         df['strategy_returns'] = df['strategy_returns'].fillna(0)
-        df["fstrategy_cumm_ret"] = ((1 + df["strategy_returns"]).cumprod() - 1) * 100
+        df["strategy_cumm_ret"] = ((1 + df["strategy_returns"]).cumprod() - 1) * 100
         df[f"{symbol1}_cumm_returns"] = ((1 + df[f"{symbol1}_returns"]).cumprod() - 1) * 100 
 
         entry = df["ensemble_signal"] == 1
@@ -172,9 +172,14 @@ if st.button("Fetch Data & Run Strategy"):
             template="plotly_dark"
         )
         st.plotly_chart(fig, use_container_width=True)
+        new_df = df.copy()
+        new_df["Signal"] = np.where(df["ensemble_signal"] == 1, "S&P 500", "USD DX")
+        new_df = new_df[[f"{symbol1}_Close", f"{symbol2}_Close",
+                    f"{symbol1}_returns", f"{symbol2}_returns",
+                    "ensemble_signal", "strategy_returns", f"{symbol1}_cumm_returns", "Signal"]]
 
         st.subheader("Strategy Output Table")
-        st.dataframe(df)
+        st.dataframe(new_df)
 
         stats = portfolio.stats()
         st.subheader("Portfolio Statistics")
